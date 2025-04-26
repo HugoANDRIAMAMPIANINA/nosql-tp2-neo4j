@@ -11,7 +11,7 @@
     ```
 2. Install dependences
     ```bash
-    pip install flask py2neo
+    pip install -r requirements.txt
     ```
 3. Start the Neo4j database container
     ```
@@ -24,4 +24,5 @@
 
 ## Usage
 
-1. Visit the API at [localhost:8080](http://localhost:8080)
+- Visit the API at [localhost:5000](http://localhost:5000)
+- Visit the API documentation at [localhost:5000/docs/](http://localhost:5000/docs/) to see the fully documented routes

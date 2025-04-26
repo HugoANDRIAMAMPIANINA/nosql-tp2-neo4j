@@ -10,6 +10,41 @@ users_bp = Blueprint("users", __name__, url_prefix="/users")
 
 @users_bp.route("", methods=["GET"])
 def get_users():
+    """
+    Get all users
+    ---
+    tags:
+      - Users
+    responses:
+      200:
+        description: A list of users
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id:
+                type: string
+                description: The user's ID (uuid)
+              name:
+                type: string
+                description: The user's name
+              email:
+                type: string
+                description: The user's email address
+              created_at:
+                type: string
+                description: The date the user was created
+        examples:
+            application/json: [
+                {
+                    "user_id": "fb8f24eb-01a9-4f49-b324-e34106c9f73c",
+                    "name": "John Doe",
+                    "email": "john.doe@example.com",
+                    "created_at": "1745676650"
+                }
+            ]
+    """
     query = "MATCH (u:User) RETURN u"
     result = graph.run(query)
     users = []
@@ -28,6 +63,30 @@ def get_users():
 
 @users_bp.route("/<string:user_id>", methods=["GET"])
 def get_user_by_id(user_id):
+    """
+    Get a user by ID
+    ---
+    tags:
+      - Users
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+    responses:
+      200:
+        description: A user
+        examples:
+            application/json: {
+                "user_id": "fb8f24eb-01a9-4f49-b324-e34106c9f73c",
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "created_at": "1745676650"
+            }
+      404:
+        description: User not found
+    """
+
     user = repo.match(User, user_id).first()
 
     if user is None:
@@ -45,6 +104,29 @@ def get_user_by_id(user_id):
 
 @users_bp.route("", methods=["POST"])
 def create_user():
+    """
+    Create a new user
+    ---
+    tags:
+      - Users
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+    responses:
+      201:
+        description: User succesfully created
+      400:
+        description: Missing name or email fields
+    """
+
     data = request.json
 
     if not "name" in data:
@@ -66,6 +148,32 @@ def create_user():
 
 @users_bp.route("/<string:user_id>", methods=["PUT"])
 def update_user(user_id):
+    """
+    Update an existing user
+    ---
+    tags:
+      - Users
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+    responses:
+      201:
+        description: User succesfully updated
+      404:
+        description: User not found
+    """
+
     data = request.json
     user = repo.match(User, user_id).first()
 
@@ -84,6 +192,23 @@ def update_user(user_id):
 
 @users_bp.route("/<string:user_id>", methods=["DELETE"])
 def delete_user(user_id):
+    """
+    Delete a user
+    ---
+    tags:
+      - Users
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+    responses:
+      204:
+        description: User succesfully deleted
+      404:
+        description: User not found
+    """
+
     user = repo.match(User, user_id).first()
 
     if user is None:
@@ -95,6 +220,23 @@ def delete_user(user_id):
 
 @users_bp.route("/<string:user_id>/friends", methods=["GET"])
 def get_user_friends(user_id):
+    """
+    Get a user's friends
+    ---
+    tags:
+      - Users
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+    responses:
+      200:
+        description: A list of user's friends
+      404:
+        description: User not found
+    """
+
     user = repo.match(User, user_id).first()
 
     if user is None:
@@ -114,6 +256,33 @@ def get_user_friends(user_id):
 
 @users_bp.route("/<string:user_id>/friends", methods=["POST"])
 def add_friend_to_user(user_id):
+    """
+    Add a friend to a user
+    ---
+    tags:
+      - Users
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            friend_id:
+              type: string
+    responses:
+      201:
+        description: Friend succesfully added
+      400:
+        description: Missing friend_id field
+      404:
+        description: User or friend not found
+    """
+
     data = request.json
     user = repo.match(User, user_id).first()
 
@@ -136,6 +305,27 @@ def add_friend_to_user(user_id):
 
 @users_bp.route("/<string:user_id>/friends/<string:friend_id>", methods=["DELETE"])
 def remove_friend_to_user(user_id, friend_id):
+    """
+    Remove a friend from a user
+    ---
+    tags:
+      - Users
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+      - name: friend_id
+        in: path
+        type: string
+        required: true
+    responses:
+      201:
+        description: Friend succesfully removed
+      404:
+        description: User or friend not found
+    """
+
     user = repo.match(User, user_id).first()
 
     if user is None:
@@ -154,6 +344,27 @@ def remove_friend_to_user(user_id, friend_id):
 
 @users_bp.route("/<string:user_id>/friends/<string:friend_id>", methods=["GET"])
 def check_users_are_friends(user_id, friend_id):
+    """
+    Check if two users are friends
+    ---
+    tags:
+      - Users
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+      - name: friend_id
+        in: path
+        type: string
+        required: true
+    responses:
+      200:
+        description: True if users are friends, False otherwise
+      404:
+        description: User or friend not found
+    """
+
     user = repo.match(User, user_id).first()
 
     if user is None:
@@ -171,6 +382,27 @@ def check_users_are_friends(user_id, friend_id):
 
 @users_bp.route("/<string:user_id>/mutual-friends/<string:other_id>", methods=["GET"])
 def get_mutual_friends(user_id, other_id):
+    """
+    Get mutual friends between two users
+    ---
+    tags:
+      - Users
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+      - name: other_id
+        in: path
+        type: string
+        required: true
+    responses:
+      200:
+        description: A list of mutual friends
+      404:
+        description: User or other user not found
+    """
+
     user = repo.match(User, user_id).first()
 
     if user is None:
@@ -196,6 +428,23 @@ def get_mutual_friends(user_id, other_id):
 
 @users_bp.route("/<string:user_id>/posts", methods=["GET"])
 def get_user_posts(user_id):
+    """
+    Get posts created by a user
+    ---
+    tags:
+      - Users
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+    responses:
+      200:
+        description: A list of user's posts
+      404:
+        description: User not found
+    """
+
     user = repo.match(User, user_id).first()
 
     if user is None:
@@ -216,6 +465,35 @@ def get_user_posts(user_id):
 
 @users_bp.route("/<string:user_id>/posts", methods=["POST"])
 def create_post(user_id):
+    """
+    Create a post for a user
+    ---
+    tags:
+      - Posts
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            title:
+              type: string
+            content:
+              type: string
+    responses:
+      201:
+        description: Post created
+      400:
+        description: Missing title or content fields
+      404:
+        description: User not found
+    """
+
     data = request.json
     user = repo.match(User, user_id).first()
 
